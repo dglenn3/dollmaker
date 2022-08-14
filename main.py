@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-""" pygame.examples.chimp
-
+""" 
 This simple application allows you to 
 use your own art to create a doll maker. 
 """
@@ -15,12 +14,14 @@ if not pg.font:
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 data_dir = os.path.join(main_dir, "images")
-length = 3
 
 
 # functions to create our resources
-def load_image(name, scale=1):
-    fullname = os.path.join(data_dir, name)
+def load_image(name, type=None, scale=1):
+    if(type):
+        fullname = os.path.join(data_dir, type, name)
+    else:
+        fullname = os.path.join(data_dir, name)
     image = pg.image.load(fullname)
     image = image.convert_alpha()
 
@@ -29,50 +30,30 @@ def load_image(name, scale=1):
     image = pg.transform.scale(image, size)
     return image, image.get_rect()
 
-
-# def load_all_images():
-#     dirs = os.listdir(data_dir)
-#     for name in dirs:
-#         print(name)
-
-
 # classes for our game objects
 class Image(pg.sprite.Sprite):
 
-    def __init__(self):
+    def __init__(self, name, length=0, type=None, scale=1):
         pg.sprite.Sprite.__init__(self)  # call Sprite initializer
-        self.image, self.rect = load_image("base.png")
+        self.image, self.rect = load_image(name, type, scale)
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.rect.topleft = 5, 5
         self.index = 0
+        self.length = length
+        self.type = type
 
     def update(self):
         """Update the image based on the user selection"""
-        if self.index == 0:
-            self.image, self.rect = load_image("base.png")
-        else:
-            self.image, self.rect = load_image(f"test{self.index + 1}.png")
+        self.image, self.rect = load_image(f"test{self.index + 1}.png", self.type, 1)
         self.rect.topleft = 5, 5
 
-    def change_image(self, target):
+    def change_image(self):
         """Cycle to the next image in the sequence"""
-        if self.index < length - 1:
+        if self.index < self.length - 1:
             self.index += 1
         else:
             self.index = 0
-
-class Cursor(pg.sprite.Sprite):
-    """The in-game cursor, following the mouse"""
-
-    def __init__(self):
-        pg.sprite.Sprite.__init__(self)  # call Sprite initializer
-        self.image, self.rect = load_image("cursor.png", 0.25)
-
-    def update(self):
-        """Move the cursor based on the mouse position"""
-        pos = pg.mouse.get_pos()
-        self.rect.topleft = pos
 
 class Button(pg.sprite.Sprite):
     """Creates a button that can be used to
@@ -84,6 +65,11 @@ class Button(pg.sprite.Sprite):
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
         self.rect.topleft = 500, topleft * 150
+    
+    def check_click(self, mouse_pos):
+        if self.rect.collidepoint(mouse_pos):
+            return True
+        return False
 
 def main():
     """this function is called when the program starts.
@@ -96,7 +82,7 @@ def main():
     # Create The Background
     background = pg.Surface(screen.get_size())
     background = background.convert()
-    background.fill((170, 238, 187))
+    background.fill((255, 255, 255))
 
     # Put Text On The Background, Centered
     if pg.font:
@@ -110,13 +96,17 @@ def main():
     pg.display.flip()
 
     # Prepare Game Objects
-    image = Image()
-    button = Button(1)
+    static = pg.sprite.Group()
+    base = Image("base.png")
+    static.add(base)
+    animal = Image("test1.png", len(os.listdir(os.path.join(data_dir, "animals"))), "animals", 1)
+    boot = Image("test1.png", len(os.listdir(os.path.join(data_dir, "boots"))), "boots", 1)
+    image_list = [animal, boot]
+    button1 = Button(1)
     button2 = Button(2)
-    button_list = [button, button2]
-    cursor = Cursor()
-    allsprites = pg.sprite.RenderPlain((image, button, cursor))
-    # load_all_images()
+    button_list = [button1, button2]
+    static.draw(background)
+    allsprites = pg.sprite.RenderPlain((animal, boot, button1, button2))
 
     # Main Loop
     going = True
@@ -129,9 +119,9 @@ def main():
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 going = False
             elif event.type == pg.MOUSEBUTTONDOWN:
-                clicked = pg.sprite.spritecollide(cursor, button_list, False)
-                if len(clicked) > 0:
-                    image.change_image(clicked)
+                for button in button_list:
+                    if button.check_click(event.pos):
+                        image_list[button_list.index(button)].change_image()
 
         allsprites.update()
 
