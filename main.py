@@ -13,63 +13,95 @@ if not pg.font:
     print("Warning, fonts disabled")
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
-data_dir = os.path.join(main_dir, "images")
-
+image_dir = os.path.join(main_dir, "images")
+dynamic_components = None
 
 # functions to create our resources
-def load_image(name, type=None, scale=1):
-    if(type):
-        fullname = os.path.join(data_dir, type, name)
+def load_component(name, directory=None, scale=1):
+    if(directory):
+        fullname = os.path.join(image_dir, directory, name)
     else:
-        fullname = os.path.join(data_dir, name)
+        fullname = os.path.join(image_dir, name)
     image = pg.image.load(fullname)
     image = image.convert_alpha()
 
     size = image.get_size()
     size = (size[0] * scale, size[1] * scale)
     image = pg.transform.scale(image, size)
-    return image, image.get_rect()
+    return {"image": image, "rect": image.get_rect()}
+
+def load_dynamic_components():
+    components = []
+    for directory_name in next(os.walk(image_dir))[1]:
+        images = []
+        for image_name in next(os.walk(os.path.join(image_dir, directory_name)))[2]:
+            i = load_component(image_name, directory_name)
+            images.append({"image": i.get("image"), "rect": i.get("rect")})
+        components.append(images)
+    return components
+
+def load_all_buttons(dynamic_components):
+    all_buttons = []
+    for directory_index, directory in enumerate(dynamic_components):
+        for component_index, component in enumerate(directory):
+            button = Button(directory_index, component_index, component)
+            all_buttons.append(button)
+    return all_buttons
 
 # classes for our game objects
-class Image(pg.sprite.Sprite):
+class DynamicImage(pg.sprite.Sprite):
 
-    def __init__(self, name, length=0, type=None, scale=1):
+    def __init__(self, directory, index):
         pg.sprite.Sprite.__init__(self)  # call Sprite initializer
-        self.image, self.rect = load_image(name, type, scale)
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
+        component = dynamic_components[directory][index]
+        self.image = component.get("image") 
+        self.rect = component.get("rect")
         self.rect.topleft = 5, 5
-        self.index = 0
-        self.length = length
-        self.type = type
+        self.directory = directory
+        self.index = index
 
     def update(self):
         """Update the image based on the user selection"""
-        self.image, self.rect = load_image(f"test{self.index + 1}.png", self.type, 1)
-        self.rect.topleft = 5, 5
+        component = dynamic_components[self.directory][self.index]
+        self.image = component.get("image") 
+        self.rect = component.get("rect")
 
-    def change_image(self):
-        """Cycle to the next image in the sequence"""
-        if self.index < self.length - 1:
-            self.index += 1
-        else:
-            self.index = 0
+
+    def change_image(self, directory, index):
+        """Change to the image with the selected index"""
+        self.directory = directory
+        self.index = index
+
+class StaticImage(pg.sprite.Sprite):
+    def __init__(self, component):
+        pg.sprite.Sprite.__init__(self)  # call Sprite initializer
+        self.image = component.get("image") 
+        self.rect = component.get("rect")
 
 class Button(pg.sprite.Sprite):
     """Creates a button that can be used to
     cycle through the list of images"""
 
-    def __init__(self, topleft):
+    def __init__(self, top, left, component):
         pg.sprite.Sprite.__init__(self)  # call Sprite initializer
-        self.image, self.rect = load_image("danger.gif")
+        self.image = pg.transform.smoothscale(component.get("image"), (50, 50))
+        self.rect = pg.Rect(0, 0, 50, 50)
         screen = pg.display.get_surface()
         self.area = screen.get_rect()
-        self.rect.topleft = 500, topleft * 150
+        self.rect.topleft = (left + 1) * 100 + 300, (top + 1) * 75
+        self.directory = top
+        self.index = left
     
     def check_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
             return True
         return False
+
+class Component():
+    def __init__(self):
+        self.image, self.rect = load_component()
 
 def main():
     """this function is called when the program starts.
@@ -84,29 +116,23 @@ def main():
     background = background.convert()
     background.fill((255, 255, 255))
 
-    # Put Text On The Background, Centered
-    if pg.font:
-        font = pg.font.Font(None, 64)
-        text = font.render("Wave the aqua rod on danger to change image", True, (10, 10, 10))
-        textpos = text.get_rect(centerx=background.get_width() / 2, y=10)
-        background.blit(text, textpos)
-
     # Display The Background
     screen.blit(background, (0, 0))
     pg.display.flip()
 
     # Prepare Game Objects
     static = pg.sprite.Group()
-    base = Image("base.png")
+    base = StaticImage(load_component("base.png"))
     static.add(base)
-    animal = Image("test1.png", len(os.listdir(os.path.join(data_dir, "animals"))), "animals", 1)
-    boot = Image("test1.png", len(os.listdir(os.path.join(data_dir, "boots"))), "boots", 1)
-    image_list = [animal, boot]
-    button1 = Button(1)
-    button2 = Button(2)
-    button_list = [button1, button2]
+    global dynamic_components 
+    dynamic_components = load_dynamic_components()
+    all_buttons = load_all_buttons(dynamic_components)
+    images_to_render = []
+    for directory_index, directory in enumerate(dynamic_components):
+        if(len(directory) > 0):
+            images_to_render.append(DynamicImage(directory_index, 0))
     static.draw(background)
-    allsprites = pg.sprite.RenderPlain((animal, boot, button1, button2))
+    all_sprites = pg.sprite.RenderPlain((images_to_render, all_buttons))
 
     # Main Loop
     going = True
@@ -119,15 +145,16 @@ def main():
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 going = False
             elif event.type == pg.MOUSEBUTTONDOWN:
-                for button in button_list:
+                for button in all_buttons:
                     if button.check_click(event.pos):
-                        image_list[button_list.index(button)].change_image()
+                        images_to_render[button.directory].change_image(button.directory, button.index)
+                        break 
 
-        allsprites.update()
+        all_sprites.update()
 
         # Draw Everything
         screen.blit(background, (0, 0))
-        allsprites.draw(screen)
+        all_sprites.draw(screen)
         pg.display.flip()
 
     pg.quit()

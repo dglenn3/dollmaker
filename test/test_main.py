@@ -42,5 +42,15 @@ class TestButton(unittest.TestCase):
         button1 = main.Button(1)
         assert(button1.check_click((500,150)) == True)
 
+class TestLoadAllImages(unittest.TestCase):
+    def test_load_all_image(self):
+        pg.display.set_mode((900, 650), pg.SCALED)
+        surface = pg.Surface((1,1))
+        pg.image.load = unittest.mock.Mock()
+        pg.image.load.return_value = surface
+
+        assert(main.load_all_images() == surface, surface.get_rect())
+
+
 if __name__ == '__main__':
     unittest.main()
