@@ -30,6 +30,13 @@ def load_component(name, directory=None, scale=1):
     image = pg.transform.scale(image, size)
     return {"image": image, "rect": image.get_rect()}
 
+def load_static_images():
+    images = []
+    for file_name in next(os.walk(image_dir))[2]:
+        image = StaticImage(load_component(file_name))
+        images.append(image)
+    return images
+
 def load_dynamic_components():
     components = []
     for directory_name in next(os.walk(image_dir))[1]:
@@ -122,8 +129,8 @@ def main():
 
     # Prepare Game Objects
     static = pg.sprite.Group()
-    base = StaticImage(load_component("base.png"))
-    static.add(base)
+    static_images = load_static_images()
+    static.add(static_images)
     global dynamic_components 
     dynamic_components = load_dynamic_components()
     all_buttons = load_all_buttons(dynamic_components)
