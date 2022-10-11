@@ -71,7 +71,7 @@ def main():
     # Initialize Everything
     pg.init()
 
-    screen = pg.display.set_mode((900, 650), pg.SCALED)
+    screen = pg.display.set_mode((0,0), pg.FULLSCREEN)
     # Create The Background
     background = pg.Surface(screen.get_size())
     background = background.convert()
