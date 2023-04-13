@@ -19,12 +19,12 @@ image_dir = os.path.join(main_dir, "images")
 dynamic_components = None
 
 # functions to create our resources
-def load_component(name, directory=None, scale=1):
+def load_component(image_name, directory=None, scale=1):
     if(directory):
-        fullname = os.path.join(image_dir, directory, name)
+        full_name = os.path.join(image_dir, directory, image_name)
     else:
-        fullname = os.path.join(image_dir, name)
-    image = pg.image.load(fullname)
+        full_name = os.path.join(image_dir, image_name)
+    image = pg.image.load(full_name)
     image = image.convert_alpha()
 
     size = image.get_size()
@@ -32,20 +32,20 @@ def load_component(name, directory=None, scale=1):
     image = pg.transform.scale(image, size)
     return {"image": image, "rect": image.get_rect()}
 
-def load_static_images():
+def load_static_images(image_dir = image_dir):
     images = []
     for file_name in next(os.walk(image_dir))[2]:
         image = StaticImage(load_component(file_name))
         images.append(image)
     return images
 
-def load_dynamic_components():
+def load_dynamic_components(image_dir = image_dir):
     components = []
     for directory_name in next(os.walk(image_dir))[1]:
         images = []
         for image_name in next(os.walk(os.path.join(image_dir, directory_name)))[2]:
             i = load_component(image_name, directory_name)
-            images.append({"image": i.get("image"), "rect": i.get("rect")})
+            images.append(i)
         components.append(images)
     return components
 
@@ -119,7 +119,6 @@ def main():
         pg.display.flip()
 
     pg.quit()
-
 # Game Over
 
 # this calls the 'main' function when this script is executed
