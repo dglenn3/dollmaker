@@ -11,19 +11,14 @@ import pygame as pg
 from button import Button
 from dynamicimage import DynamicImage
 
-if not pg.font:
-    print("Warning, fonts disabled")
-
-main_dir = os.path.split(os.path.abspath(__file__))[0]
-image_dir = os.path.join(main_dir, "images")
 dynamic_components = None
 
-# functions to create our resources
-def load_component(image_name, directory=None, scale=1):
-    if(directory):
-        full_name = os.path.join(image_dir, directory, image_name)
+# Functions to create resources
+def load_component(image_name, directory, sub_directory=None, scale=1):
+    if(sub_directory):
+        full_name = os.path.join(directory, sub_directory, image_name)
     else:
-        full_name = os.path.join(image_dir, image_name)
+        full_name = os.path.join(directory, image_name)
     image = pg.image.load(full_name)
     image = image.convert_alpha()
 
@@ -32,19 +27,21 @@ def load_component(image_name, directory=None, scale=1):
     image = pg.transform.scale(image, size)
     return {"image": image, "rect": image.get_rect()}
 
-def load_static_images(image_dir = image_dir):
+def load_static_images():
     images = []
-    for file_name in next(os.walk(image_dir))[2]:
-        image = StaticImage(load_component(file_name))
+    for file_name in next(os.walk(os.environ.get("IMAGE_DIR")))[2]:
+        image = StaticImage(load_component(file_name, os.environ.get("IMAGE_DIR")))
         images.append(image)
     return images
 
-def load_dynamic_components(image_dir = image_dir):
+def load_dynamic_components(image_dir=None):
+    if image_dir is None:
+        image_dir = os.environ.get("IMAGE_DIR")
     components = []
     for directory_name in next(os.walk(image_dir))[1]:
         images = []
         for image_name in next(os.walk(os.path.join(image_dir, directory_name)))[2]:
-            i = load_component(image_name, directory_name)
+            i = load_component(image_name, image_dir, directory_name)
             images.append(i)
         components.append(images)
     return components
@@ -65,7 +62,7 @@ class StaticImage(pg.sprite.Sprite):
         self.rect = component.get("rect")
 
 def main():
-    """this function is called when the program starts.
+    """This function is called when the program starts.
     it initializes everything it needs, then runs in
     a loop until the function returns."""
     # Initialize Everything
@@ -80,6 +77,10 @@ def main():
     # Display The Background
     screen.blit(background, (0, 0))
     pg.display.flip()
+
+    # Set the value of IMAGE_DIR
+    main_dir = os.path.split(os.path.abspath(__file__))[0]
+    os.environ["IMAGE_DIR"] = os.path.join(main_dir, "images")
 
     # Prepare Game Objects
     static = pg.sprite.Group()
@@ -121,6 +122,6 @@ def main():
     pg.quit()
 # Game Over
 
-# this calls the 'main' function when this script is executed
+# This calls the 'main' function when this script is executed
 if __name__ == "__main__":
     main()

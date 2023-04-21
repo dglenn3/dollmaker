@@ -1,3 +1,4 @@
 .vscode/settings.json
 __pycache__/
 *.py[cod]
+.vscode/launch.json
