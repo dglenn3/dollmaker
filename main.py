@@ -38,19 +38,22 @@ def load_dynamic_components(image_dir=None):
     if image_dir is None:
         image_dir = os.environ.get("IMAGE_DIR")
     components = []
+    widest_image = 1
     for directory_name in next(os.walk(image_dir))[1]:
         images = []
         for image_name in next(os.walk(os.path.join(image_dir, directory_name)))[2]:
             i = load_component(image_name, image_dir, directory_name)
             images.append(i)
+            if(i.get("rect").width > widest_image):
+                widest_image = i.get("rect").width
         components.append(images)
-    return components
+    return components, widest_image
 
-def load_all_buttons(dynamic_components):
+def load_all_buttons(dynamic_components, widest_image ):
     all_buttons = []
     for directory_index, directory in enumerate(dynamic_components):
         for component_index, component in enumerate(directory):
-            button = Button(directory_index, component_index, component)
+            button = Button(directory_index, component_index, widest_image, component)
             all_buttons.append(button)
     return all_buttons
 
@@ -88,8 +91,8 @@ def main():
     static_images = load_static_images()
     static.add(static_images)
     global dynamic_components 
-    dynamic_components = load_dynamic_components()
-    all_buttons = load_all_buttons(dynamic_components)
+    dynamic_components, widest_image = load_dynamic_components()
+    all_buttons = load_all_buttons(dynamic_components, widest_image)
     images_to_render = []
     for directory_index, directory in enumerate(dynamic_components):
         if(len(directory) > 0):

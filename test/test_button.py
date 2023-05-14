@@ -7,12 +7,12 @@ class TestButton(unittest.TestCase):
         pg.display.set_mode()
         surface = pg.Surface((800, 600))
         component = {"image": surface, "rect": surface.get_rect()}
-        button = main.Button(1,1,component)
+        button = main.Button(1,1,150,component)
         assert(button.check_click((0,0)) == False)
 
     def test_check_click_with_collision(self):
         pg.display.set_mode()
         surface = pg.Surface((800, 600))
         component = {"image": surface, "rect": surface.get_rect()}
-        button = main.Button(1,1,component)
-        assert(button.check_click((500,150)) == True)
+        button = main.Button(1,1,100,component)
+        assert(button.check_click((200,150)) == True)
