@@ -2,7 +2,7 @@ import pygame as pg
 
 class Button(pg.sprite.Sprite):
     """Creates a button that can be used to
-    change an image"""
+    display an image"""
 
     def __init__(self, top, left, component):
         pg.sprite.Sprite.__init__(self)  # call Sprite initializer
