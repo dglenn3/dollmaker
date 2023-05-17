@@ -4,8 +4,6 @@ class DynamicImage(pg.sprite.Sprite):
 
     def __init__(self, component):
         pg.sprite.Sprite.__init__(self)  # call Sprite initializer
-        screen = pg.display.get_surface()
-        self.area = screen.get_rect()
         self.image = component.get("image") 
         self.rect = component.get("rect")
 
