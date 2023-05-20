@@ -14,7 +14,7 @@ class Button(pg.sprite.Sprite):
         self.index = index
 
     def validate_and_update_position(self, left_offset, top, left):
-        window_width= pg.display.get_surface().get_size()[0]
+        window_width = pg.display.get_surface().get_size()[0]
         if(window_width - left_offset - (left * 75)) >= 0:
             return top, left
         left = left - 1 - (window_width - left_offset) // 75

@@ -11,10 +11,8 @@ import pygame as pg
 from button import Button
 from dynamicimage import DynamicImage
 
-dynamic_components = None
-
 # Functions to create resources
-def load_component(image_name, directory, sub_directory=None, scale=1):
+def load_component(image_name, directory, sub_directory=None):
     if(sub_directory):
         full_name = os.path.join(directory, sub_directory, image_name)
     else:
@@ -22,9 +20,6 @@ def load_component(image_name, directory, sub_directory=None, scale=1):
     image = pg.image.load(full_name)
     image = image.convert_alpha()
 
-    size = image.get_size()
-    size = (size[0] * scale, size[1] * scale)
-    image = pg.transform.scale(image, size)
     return {"image": image, "rect": image.get_rect()}
 
 def load_static_images():
@@ -38,22 +33,23 @@ def load_dynamic_components(image_dir=None):
     if image_dir is None:
         image_dir = os.environ.get("IMAGE_DIR")
     components = []
-    widest_image = 1
+    max_width = 0
     for directory_name in next(os.walk(image_dir))[1]:
         images = []
-        for image_name in next(os.walk(os.path.join(image_dir, directory_name)))[2]:
-            i = load_component(image_name, image_dir, directory_name)
-            images.append(i)
-            if(i.get("rect").width > widest_image):
-                widest_image = i.get("rect").width
-        components.append(images)
-    return components, widest_image
+        if (len(next(os.walk(os.path.join(image_dir, directory_name)))[2]) > 0):
+            for image_name in next(os.walk(os.path.join(image_dir, directory_name)))[2]:
+                i = load_component(image_name, image_dir, directory_name)
+                images.append(i)
+                if(i.get("rect").width > max_width):
+                    max_width = i.get("rect").width
+            components.append(images)
+    return components, max_width
 
-def load_all_buttons(dynamic_components, widest_image ):
+def load_all_buttons(dynamic_components, max_width ):
     all_buttons = []
     for directory_index, directory in enumerate(dynamic_components):
         for component_index, component in enumerate(directory):
-            button = Button(directory_index, component_index, widest_image, component)
+            button = Button(directory_index, component_index, max_width, component)
             all_buttons.append(button)
     return all_buttons
 
@@ -90,9 +86,8 @@ def main():
     static = pg.sprite.Group()
     static_images = load_static_images()
     static.add(static_images)
-    global dynamic_components 
-    dynamic_components, widest_image = load_dynamic_components()
-    all_buttons = load_all_buttons(dynamic_components, widest_image)
+    dynamic_components, max_width = load_dynamic_components()
+    all_buttons = load_all_buttons(dynamic_components, max_width)
     images_to_render = []
     for directory_index, directory in enumerate(dynamic_components):
         if(len(directory) > 0):

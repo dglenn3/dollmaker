@@ -47,16 +47,24 @@ class TestLoadComponent(BaseTestCase):
 
 class TestLoadDynamicImages(BaseTestCase):
     def test_load_dynamic_components(self):
-        components, widest_image = main.load_dynamic_components(self.image_dir)
+        components, max_width = main.load_dynamic_components(self.image_dir)
         assert(len(components) == 3)
         assert(len(components[1]) == 2)
-        assert(widest_image == 1)
+        assert(max_width == 1)
 
     def test_load_dynamic_components_default_directory(self):
-        components, widest_image = main.load_dynamic_components()
+        components, max_width = main.load_dynamic_components()
         assert(len(components) == 3)
         assert(len(components[1]) == 2)
-        assert(widest_image == 1)
+        assert(max_width == 1)
+
+    def test_load_dynamic_components_empty_subdir(self):
+        subdir_path = os.path.join(self.image_dir, "empty_subdir")
+        os.mkdir(subdir_path)
+        components, max_width = main.load_dynamic_components()
+        assert(len(components) == 3)
+        assert(len(components[1]) == 2)
+        assert(max_width == 1)
 
 
 class TestStaticImages(BaseTestCase):
@@ -67,8 +75,8 @@ class TestStaticImages(BaseTestCase):
 
 class TestLoadButtons(BaseTestCase):
     def test_load_all_buttons(self):
-        components, widest_image = main.load_dynamic_components(self.image_dir)
-        all_buttons = main.load_all_buttons(components, widest_image)
+        components, max_width = main.load_dynamic_components(self.image_dir)
+        all_buttons = main.load_all_buttons(components, max_width)
         assert(len(all_buttons) == 6)
 
 if __name__ == '__main__':
